@@ -43,3 +43,8 @@ next-env.d.ts
 
 #
 /markdown
+# markdown files
+PR_DESCRIPTION.md
+
+#kiro stuff
+.kiro/specs/logout-button

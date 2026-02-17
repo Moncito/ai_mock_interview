@@ -134,3 +134,25 @@ export async function isAuthenticated() {
 
     return !!user; // Returns true if user exists, false otherwise
 }
+
+export async function signOut() {
+    "use server";
+
+    try {
+        const cookieStore = await cookies();
+
+        // Delete the session cookie
+        cookieStore.delete('session');
+
+        return {
+            success: true,
+            message: 'Logged out successfully'
+        };
+    } catch (error) {
+        console.error('Logout error:', error);
+        return {
+            success: false,
+            message: 'Failed to logout. Please try again.'
+        };
+    }
+}
