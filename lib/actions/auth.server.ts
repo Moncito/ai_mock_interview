@@ -19,8 +19,8 @@ export async function getCurrentUser() {
             ...userRecord.data(),
             id: userRecord.id,
         } as User;
-    } catch (e) {
-        console.error("Error verifying session:", e);
+    } catch (e: any) {
+        // Silently return null for invalid session cookies (expected behavior)
         return null;
     }
 }

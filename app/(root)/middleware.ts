@@ -11,13 +11,15 @@ export async function middleware(req: NextRequest) {
     try {
         await auth.verifySessionCookie(sessionCookie, true);
         return NextResponse.next();
-    } catch (e) {
-        console.error("Session verification failed:", e);
-        return NextResponse.redirect(new URL("/sign-in", req.url));
+    } catch (e: any) {
+        // Clear the invalid session cookie
+        const response = NextResponse.redirect(new URL("/sign-in", req.url));
+        response.cookies.delete("session");
+        return response;
     }
 }
 
 // Apply middleware only to protected pages
 export const config = {
-    matcher: ["/dashboard/:path*", "/profile/:path*"], // Change these to your protected routes
+    matcher: ["/interview/:path*", "/dashboard/:path*", "/profile/:path*"], // Protected routes
 };
