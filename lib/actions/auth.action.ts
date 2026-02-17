@@ -15,7 +15,7 @@ export async function signUp(params: SignUpParams) {
 
         if (userRecord.exists) {
             return {
-                sucess: false,
+                success: false,
                 message: "User Already Exist Please Sign-In"
             }
         }
@@ -82,7 +82,7 @@ export async function setSessionCookie(idToken: string) {
         expiresIn: ONE_WEEK * 1000,
     });
 
-    cookieStore.set('session', sessionCookie, {  // Corrected syntax
+    cookieStore.set('session', sessionCookie, {
         maxAge: ONE_WEEK,
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -103,8 +103,8 @@ export async function getCurrentUser(): Promise<User | null> {
         // 🔹 Check if user still exists in Firebase Auth
         try {
             await auth.getUser(decodedClaims.uid);
-        } catch (authError: any) {
-            if (authError.code === "auth/user-not-found") {
+        } catch (authError: unknown) {
+            if ((authError as { code?: string }).code === "auth/user-not-found") {
                 return null;
             }
             throw authError;
@@ -120,7 +120,7 @@ export async function getCurrentUser(): Promise<User | null> {
             ...userRecord.data(),
             id: userRecord.id,
         } as User;
-    } catch (e: any) {
+    } catch {
         // Silently return null for invalid session cookies (expected behavior)
         return null;
     }

@@ -5,11 +5,15 @@ import { getRandomInterviewCover } from '@/lib/utils';
 import Link from 'next/link';
 import DisplayTechIcons from './DisplayTechIcons';
 import { getFeedbackByInterviewId } from '@/lib/actions/general.action';
+import { getCurrentUser } from '@/lib/actions/auth.action';
 
-const InterviewCard = async ({id, userId, role, type, techstack, createdAt}: InterviewCardProps) => {
-    const feedback = userId && id
-    ? await getFeedbackByInterviewId({interviewId: id, userId})
-    : null;
+const InterviewCard = async ({ id, role, type, techstack, createdAt }: InterviewCardProps) => {
+    // Fetch feedback only for the currently signed in user (viewer),
+    // not the interview owner. This prevents showing other users' feedback.
+    const currentUser = await getCurrentUser();
+    const feedback = currentUser?.id && id
+        ? await getFeedbackByInterviewId({ interviewId: id, userId: currentUser.id })
+        : null;
     const normalizeType = /mix/gi.test(type) ? "Mixed" : type;
     const formattedDate = dayjs(feedback?.createdAt || createdAt || Date.now()).format('MMM D, YYYY');
 

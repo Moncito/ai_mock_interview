@@ -41,6 +41,8 @@ yarn-error.log*
 next-env.d.ts
 .qodo
 
+#
+/markdown
 # markdown files
 PR_DESCRIPTION.md
 
