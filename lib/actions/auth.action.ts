@@ -5,23 +5,23 @@ import { cookies } from "next/headers";
 
 
 
-const ONE_WEEK =  60 * 60 * 24 * 7;
+const ONE_WEEK = 60 * 60 * 24 * 7;
 
 export async function signUp(params: SignUpParams) {
-    const {uid, name, email } = params;
+    const { uid, name, email } = params;
 
-    try{
+    try {
         const userRecord = await db.collection('users').doc(uid).get();
 
-        if(userRecord.exists){
-            return{
+        if (userRecord.exists) {
+            return {
                 sucess: false,
                 message: "User Already Exist Please Sign-In"
             }
         }
 
         await db.collection('users').doc(uid).set({
-            name, email    
+            name, email
         })
 
         return {
@@ -30,40 +30,45 @@ export async function signUp(params: SignUpParams) {
         };
 
 
-    }catch(e: any){
+    } catch (e: any) {
         console.error('Error Creating a User', e);
 
-        if(e.code === 'auth/email-already-exist'){
-            return{
+        if (e.code === 'auth/email-already-exist') {
+            return {
                 success: false,
                 message: "This Email is Already in Use."
             }
         }
-        return{
+        return {
             success: false,
             message: "failed to create an Account"
         };
     }
 }
 
-export async function signIn(params: SignInParams){
-    const {email, idToken} = params;
+export async function signIn(params: SignInParams) {
+    const { email, idToken } = params;
 
-    try{
+    try {
         const userRecord = await auth.getUserByEmail(email);
 
-        if(!userRecord){
-            return{
+        if (!userRecord) {
+            return {
                 success: false,
                 message: 'User does not Exist. Create an Account Instead'
             }
         }
 
         await setSessionCookie(idToken);
-    }catch(e){
+
+        return {
+            success: true,
+            message: 'Signed in successfully'
+        };
+    } catch (e) {
         console.log(e);
 
-        return{
+        return {
             success: false,
             message: 'failed to log into account.'
         }
@@ -87,7 +92,7 @@ export async function setSessionCookie(idToken: string) {
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-    const cookieStore = await cookies(); // Don't use `await cookies()`
+    const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("session")?.value;
 
     if (!sessionCookie) return null;
@@ -100,8 +105,7 @@ export async function getCurrentUser(): Promise<User | null> {
             await auth.getUser(decodedClaims.uid);
         } catch (authError: any) {
             if (authError.code === "auth/user-not-found") {
-                console.warn("User deleted. Session should be cleared.");
-                return null; // ✅ Don't delete cookie here
+                return null;
             }
             throw authError;
         }
@@ -109,17 +113,16 @@ export async function getCurrentUser(): Promise<User | null> {
         // 🔹 Check Firestore for user data
         const userRecord = await db.collection("users").doc(decodedClaims.uid).get();
         if (!userRecord.exists) {
-            console.warn("User record missing in Firestore. Session should be cleared.");
-            return null; // ✅ Don't delete cookie here
+            return null;
         }
 
         return {
             ...userRecord.data(),
             id: userRecord.id,
         } as User;
-    } catch (e) {
-        console.error("Error verifying session:", e);
-        return null; // ✅ Don't delete cookie here
+    } catch (e: any) {
+        // Silently return null for invalid session cookies (expected behavior)
+        return null;
     }
 }
 

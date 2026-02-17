@@ -5,57 +5,67 @@ import { db } from "@/firebase/admin";
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 
-export async function getInterviewByUserId(userId: string): Promise<Interview [] | null>{
-    const interviews = await db
-    .collection('interview')
-    .where('userId', '==', userId)
-    .orderBy('createdAt', 'desc')
-    .get();
+export async function getInterviewByUserId(userId: string): Promise<Interview[] | null> {
+    if (!userId) {
+        console.warn("userId is required for getInterviewByUserId");
+        return null;
+    }
 
-    return interviews.docs.map((doc)  => ({
+    const interviews = await db
+        .collection('interview')
+        .where('userId', '==', userId)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+    return interviews.docs.map((doc) => ({
         id: doc.id,
         ...doc.data()
-    }))as Interview[]
+    })) as Interview[]
 }
 
-export async function getLatestInterviews(params: GetLatestInterviewsParams): Promise<Interview [] | null>{
-    const {userId, limit = 20} = params;
+export async function getLatestInterviews(params: GetLatestInterviewsParams): Promise<Interview[] | null> {
+    const { userId, limit = 20 } = params;
+
+    if (!userId) {
+        console.warn("userId is required for getLatestInterviews");
+        return null;
+    }
 
     const interviews = await db
-    .collection('interviews')
-    .orderBy('createdAt', 'desc')
-    .where('finalized', '==', true)
-    .where('userId', '!=', userId)
-    .limit(limit)
-    .get();
+        .collection('interviews')
+        .orderBy('createdAt', 'desc')
+        .where('finalized', '==', true)
+        .where('userId', '!=', userId)
+        .limit(limit)
+        .get();
 
-    return interviews.docs.map((doc)  => ({
+    return interviews.docs.map((doc) => ({
         id: doc.id,
         ...doc.data()
-    }))as Interview[]
+    })) as Interview[]
 }
 
-export async function getInterviewById(id: string): Promise<Interview | null>{
+export async function getInterviewById(id: string): Promise<Interview | null> {
     const interviews = await db
-    .collection('interview')
-    .doc(id)
-    .get();
+        .collection('interview')
+        .doc(id)
+        .get();
 
     return interviews.data() as Interview | null;
 }
 
-export async function createFeedback(params:CreateFeedbackParams) {
-    const {interviewId, userId, transcript} = params;
+export async function createFeedback(params: CreateFeedbackParams) {
+    const { interviewId, userId, transcript } = params;
 
-    try{
+    try {
         const formattedTranscript = transcript
-        .map((sentence:{role: string; content:string;})=>{
-            `- ${sentence.role}: ${sentence.content}\n`
-        }).join('');
+            .map((sentence: { role: string; content: string; }) => {
+                `- ${sentence.role}: ${sentence.content}\n`
+            }).join('');
 
-        const {object:{totalScore, categoryScores, strengths, areasForImprovement, finalAssessment}} = await generateObject({
-            model: google('gemini-2.0-flash-001',{
-                structuredOutputs:false,
+        const { object: { totalScore, categoryScores, strengths, areasForImprovement, finalAssessment } } = await generateObject({
+            model: google('gemini-2.0-flash-001', {
+                structuredOutputs: false,
             }),
             schema: feedbackSchema,
             prompt: `You are an AI interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories. Be thorough and detailed in your analysis. Don't be lenient with the candidate. If there are mistakes or areas for improvement, point them out.
@@ -70,7 +80,7 @@ export async function createFeedback(params:CreateFeedbackParams) {
             - **Confidence & Clarity**: Confidence in responses, engagement, and clarity.
             `,
             system:
-            "You are a professional interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories",
+                "You are a professional interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories",
         });
 
         const feedback = await db.collection('feedback').add({
@@ -84,11 +94,11 @@ export async function createFeedback(params:CreateFeedbackParams) {
             createdAt: new Date().toISOString()
         })
 
-        return{
+        return {
             success: true,
             feedbackId: feedback.id
         }
-    }catch(e){
+    } catch (e) {
         console.error('Error Saving Feedback', e)
 
         return { success: false };
@@ -97,15 +107,15 @@ export async function createFeedback(params:CreateFeedbackParams) {
 
 export async function getFeedbackByInterviewId(
     params: GetFeedbackByInterviewIdParams
-    ): Promise<Feedback | null> {
+): Promise<Feedback | null> {
     const { interviewId, userId } = params;
 
     const querySnapshot = await db
-    .collection("feedback")
-    .where("interviewId", "==", interviewId)
-    .where("userId", "==", userId)
-    .limit(1)
-    .get();
+        .collection("feedback")
+        .where("interviewId", "==", interviewId)
+        .where("userId", "==", userId)
+        .limit(1)
+        .get();
 
     if (querySnapshot.empty) return null;
 
