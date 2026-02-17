@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { vapi } from '@/lib/vapi.sdk';
 import Image from 'next/image'
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 enum CallStatus {
     INACTIVE = 'INACTIVE',
@@ -20,29 +20,42 @@ interface SavedMessage {
     content: string;
 }
 
-const Agent = ({ userName, userId, type, interviewId, questions }: AgentProps) => {
+const Agent = ({ userName, userId, role, type, interviewId, questions, interviewSetup }: AgentProps & { interviewSetup?: any }) => {
     const router = useRouter();
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
     const [messages, setMessages] = useState<SavedMessage[]>([]);
+    const [generatingFeedback, setGeneratingFeedback] = useState(false);
+    const messagesRef = useRef<SavedMessage[]>([]);
 
     useEffect(() => {
-        const onCallStart = () => setCallStatus(CallStatus.ACTIVE);
-        const onCallEnd = () => setCallStatus(CallStatus.FINISHED);
+        const onCallStart = () => {
+            console.log('[Agent] 📞 vapi event: call-start');
+            setCallStatus(CallStatus.ACTIVE);
+        };
+        const onCallEnd = () => {
+            console.log('[Agent] 🏁 vapi event: call-end');
+            setCallStatus(CallStatus.FINISHED);
+        };
 
 
         const onMessage = (message: Message) => {
             if (message.type === 'transcript' && message.transcriptType === 'final') {
-                const newMessage = { role: message.role, content: message.transcript }
+                console.log(`[Agent] 📝 New transcript from ${message.role}: ${message.transcript.substring(0, 30)}...`);
+                const newMessage: SavedMessage = { role: message.role as any, content: message.transcript }
 
-                setMessages((prev) => [...prev, newMessage])
+                setMessages((prev) => {
+                    const updated = [...prev, newMessage];
+                    console.log(`[Agent] 📊 Messages count: ${updated.length}`);
+                    return updated;
+                })
             }
         }
 
         const onSpeechStart = () => setIsSpeaking(true);
         const onSpeechEnd = () => setIsSpeaking(false);
 
-        const onError = (error: Error) => console.log('Error', error);
+        const onError = (error: Error) => console.error('[Agent] ❌ vapi error', error);
 
         vapi.on('call-start', onCallStart);
         vapi.on('call-end', onCallEnd);
@@ -61,21 +74,38 @@ const Agent = ({ userName, userId, type, interviewId, questions }: AgentProps) =
         }
     }, [])
 
+    useEffect(() => {
+        messagesRef.current = messages;
+    }, [messages]);
+
     const handleGenerateFeedback = async (messages: SavedMessage[]) => {
-        console.log('Generate Feedback Here')
+        setGeneratingFeedback(true);
+        console.log('[Agent] 🚀 Starting feedback generation. Message count:', messages.length);
+        if (messages.length === 0) {
+            console.warn('[Agent] ⚠️ No messages captured yet! Check if transcripts are firing.');
+        }
 
-        // TODO: Create a server funciton that generates feedback
-        const { success, feedbackId: id } = await createFeedback({
-            interviewId: interviewId!,
-            userId: userId!,
-            transcript: messages
-        })
+        try {
+            const result = await createFeedback({
+                interviewId: interviewId!,
+                userId: userId!,
+                role: role || interviewSetup?.role || 'Interview',
+                transcript: messages
+            });
 
+            console.log('[Agent] 📬 createFeedback response:', result);
 
-        if (success && id) {
-            router.push(`/interview/${interviewId}/feedback`);
-        } else {
-            console.log('Error saving Feedback');
+            if (result.success && result.feedbackId) {
+                console.log('[Agent] ✅ Success! Redirecting to feedback page.');
+                router.push(`/interview/${interviewId}/feedback`);
+            } else {
+                console.error('[Agent] ❌ Error saving Feedback:', result.error || 'Unknown error');
+                setGeneratingFeedback(false);
+                router.push('/');
+            }
+        } catch (error) {
+            console.error('[Agent] 🧨 Exception during feedback generation:', error);
+            setGeneratingFeedback(false);
             router.push('/');
         }
     }
@@ -85,40 +115,60 @@ const Agent = ({ userName, userId, type, interviewId, questions }: AgentProps) =
             if (callStatus === CallStatus.FINISHED) {
                 if (type === 'generate') {
                     try {
-                        // Fetch the latest interview created (presumably the one just generated)
-                        const interviews = await getInterviewByUserId(userId!);
-                        if (interviews && interviews.length > 0) {
-                            // Since the query orders by createdAt desc, the first one is the latest
-                            const latestInterview = interviews[0];
-                            router.push(`/interview/${latestInterview.id}`);
-                        } else {
-                            console.warn("No interviews found after generation.");
-                            router.push('/');
+                        let attempts = 0;
+                        while (attempts < 3) {
+                            // Fetch the latest interview created (presumably the one just generated)
+                            const interviews = await getInterviewByUserId(userId!);
+                            console.log(`Attempt ${attempts + 1}: Found ${interviews?.length} interviews`);
+
+                            if (interviews && interviews.length > 0) {
+                                // Since the query orders by createdAt desc, the first one is the latest
+                                const latestInterview = interviews[0];
+                                console.log("Redirecting to:", latestInterview.id);
+                                router.push(`/interview/${latestInterview.id}`);
+                                return; // Stop processing once found
+                            }
+
+                            attempts++;
+                            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
                         }
+
+                        console.warn("No interviews found after generation retries.");
+                        router.push('/');
                     } catch (error) {
                         console.error("Failed to fetch interview after generation:", error);
                         router.push('/');
                     }
                 } else {
-                    handleGenerateFeedback(messages);
+                    // For 'interview' type, generate feedback
+                    handleGenerateFeedback(messagesRef.current);
                 }
             }
         };
 
         handleCallFinished();
-    }, [callStatus, type, userId]); // Removed 'messages' from dependency to avoid loop if messages update after finish (unlikely but safer)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [callStatus, type, userId, interviewId]);
+    // Removed 'messages' from dependency to avoid loop if messages update after finish (unlikely but safer)
 
     const handleCall = async () => {
         setCallStatus(CallStatus.CONNECTING)
 
 
         if (type === 'generate') {
-            await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+            console.log('[Agent] starting VAPI generate workflow', process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID, { username: userName, userid: userId, ...interviewSetup });
+            const startResult = await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
                 variableValues: {
                     username: userName,
                     userid: userId,
+                    role: interviewSetup?.role || '',
+                    level: interviewSetup?.level || '',
+                    type: interviewSetup?.type || '',
+                    techstack: interviewSetup?.techstack || '',
+                    amount: interviewSetup?.amount || 5,
                 }
-            })
+            });
+            console.log('[Agent] vapi.start returned', startResult);
         } else {
             let formattedQuestions = '';
 
@@ -147,6 +197,13 @@ const Agent = ({ userName, userId, type, interviewId, questions }: AgentProps) =
 
     return (
         <>
+            {generatingFeedback && (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-200 mb-4"></div>
+                    <h2 className="text-2xl font-semibold text-white">Analyzing your interview...</h2>
+                    <p className="text-gray-400 mt-2">Gemini is generating your personalized feedback.</p>
+                </div>
+            )}
             <div className="call-view">
                 {/* AI Interviewer Card */}
                 <div className="card-interviewer">

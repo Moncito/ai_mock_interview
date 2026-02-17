@@ -8,9 +8,23 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-    const { type, role, level, techstack, amount, userid } = await request.json();
+    const body = await request.json();
+    const { type, role, level, techstack, amount, userid } = body;
+
+    // Diagnostic logging to help debug generation calls
+    console.log('[api/vapi/generate] POST received with body:', JSON.stringify(body));
+
+    // Validate required fields
+    if (!type || !role || !level || !techstack || !amount || !userid) {
+        console.error('[api/vapi/generate] Missing required fields:', { type, role, level, techstack, amount, userid });
+        return Response.json(
+            { success: false, error: 'Missing required fields: type, role, level, techstack, amount, userid' },
+            { status: 400 }
+        );
+    }
 
     try {
+        console.log('[api/vapi/generate] Generating questions for role:', role, 'level:', level, 'type:', type);
         const { text: questions } = await generateText({
             model: google("gemini-2.0-flash-001"),
             prompt: `Prepare questions for a job interview.
@@ -28,9 +42,11 @@ export async function POST(request: Request) {
         `
         });
 
+        console.log('[api/vapi/generate] Generated questions:', questions);
+
         const interview = {
             role, type, level,
-            techstack: techstack.split(','),
+            techstack: techstack.split(',').map((t: string) => t.trim()),
             questions: JSON.parse(questions),
             userId: userid,
             finalized: true,
@@ -39,12 +55,12 @@ export async function POST(request: Request) {
         }
 
         const docRef = await db.collection('interview').add(interview);
+        console.log('[api/vapi/generate] Interview created with id:', docRef.id, 'for user:', userid);
 
         return Response.json({ success: true, interviewId: docRef.id }, { status: 200 })
 
     } catch (error) {
-        console.log(error);
-
-        return Response.json({ success: false, error }, { status: 500 });
+        console.error('[api/vapi/generate] Error:', error);
+        return Response.json({ success: false, error: String(error) }, { status: 500 });
     }
 }

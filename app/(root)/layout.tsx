@@ -11,11 +11,15 @@ const Rootlayout = async ({ children }: { children: ReactNode }) => {
 
     return (
         <div className="root-layout">
-            <nav>
+            <nav className="flex items-center justify-between py-4 px-6">
                 <Link href="/" className="flex items-center gap-2">
                     <Image src="/logo.svg" alt="MockMate Logo" width={38} height={32} />
                     <h2 className="text-primary-100">PrepSaint</h2>
                 </Link>
+                <div className="flex items-center gap-8">
+                    <Link href="/" className="text-gray-300 hover:text-white transition-colors">Dashboard</Link>
+                    <Link href="/feedback" className="text-gray-300 hover:text-white transition-colors">Feedback</Link>
+                </div>
             </nav>
             {children}
         </div>

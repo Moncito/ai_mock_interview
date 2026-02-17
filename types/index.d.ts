@@ -10,6 +10,7 @@ interface Feedback {
   strengths: string[];
   areasForImprovement: string[];
   finalAssessment: string;
+  role: string;
   createdAt: string;
 }
 
@@ -28,6 +29,7 @@ interface Interview {
 interface CreateFeedbackParams {
   interviewId: string;
   userId: string;
+  role: string;
   transcript: { role: string; content: string }[];
   feedbackId?: string;
 }
@@ -50,6 +52,7 @@ interface InterviewCardProps {
 interface AgentProps {
   userName: string;
   userId?: string;
+  role?: string;
   interviewId?: string;
   feedbackId?: string;
   type: "generate" | "interview";
