@@ -123,7 +123,6 @@ export async function getCurrentUser(): Promise<User | null> {
     }
 }
 
-
 export async function isAuthenticated() {
     "use server"; // ✅ Ensure it runs on the server
 
