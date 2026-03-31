@@ -15,8 +15,8 @@ export async function signUp(params: SignUpParams) {
 
         if(userRecord.exists){
             return{
-                sucess: false,
-                message: "User Already Exist Please Sign-In"
+                success: false,
+                message: "User Already Exists. Please Sign-In"
             }
         }
 

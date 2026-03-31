@@ -13,11 +13,19 @@ const normalizeTechName = (tech: string) => {
   return mappings[key as keyof typeof mappings];
 };
 
+const iconExistsCache = new Map<string, boolean>();
+
 const checkIconExists = async (url: string) => {
+  if (iconExistsCache.has(url)) {
+    return iconExistsCache.get(url)!;
+  }
   try {
     const response = await fetch(url, { method: "HEAD" });
-    return response.ok; // Returns true if the icon exists
+    const exists = response.ok;
+    iconExistsCache.set(url, exists);
+    return exists;
   } catch {
+    iconExistsCache.set(url, false);
     return false;
   }
 };

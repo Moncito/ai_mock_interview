@@ -22,7 +22,7 @@ export async function getLatestInterviews(params: GetLatestInterviewsParams): Pr
     const {userId, limit = 20} = params;
 
     const interviews = await db
-    .collection('interviews')
+    .collection('interview')
     .orderBy('createdAt', 'desc')
     .where('finalized', '==', true)
     .where('userId', '!=', userId)
@@ -49,9 +49,9 @@ export async function createFeedback(params:CreateFeedbackParams) {
 
     try{
         const formattedTranscript = transcript
-        .map((sentence:{role: string; content:string;})=>{
+        .map((sentence:{role: string; content:string;}) =>
             `- ${sentence.role}: ${sentence.content}\n`
-        }).join('');
+        ).join('');
 
         const {object:{totalScore, categoryScores, strengths, areasForImprovement, finalAssessment}} = await generateObject({
             model: google('gemini-2.0-flash-001',{
