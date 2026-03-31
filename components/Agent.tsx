@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { vapi } from '@/lib/vapi.sdk';
 import Image from 'next/image'
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 enum CallStatus{
     INACTIVE = 'INACTIVE',
@@ -61,16 +61,12 @@ const Agent = ({userName, userId, type, interviewId, questions}: AgentProps) => 
         }
     }, [])
 
-    const handleGenerateFeedback = async (messages:SavedMessage[]) =>{
-        console.log('Generate Feedback Here')
-        
-        // TODO: Create a server funciton that generates feedback
+    const handleGenerateFeedback = useCallback(async (messages: SavedMessage[]) => {
         const {success, feedbackId: id} = await createFeedback({
             interviewId: interviewId!,
             userId: userId!,
             transcript: messages
-        })
-        
+        });
 
         if(success && id){
             router.push(`/interview/${interviewId}/feedback`);
@@ -78,7 +74,7 @@ const Agent = ({userName, userId, type, interviewId, questions}: AgentProps) => 
             console.log('Error saving Feedback');
             router.push('/');
         }
-    }
+    }, [interviewId, userId, router]);
 
     useEffect(() =>{
         if(callStatus === CallStatus.FINISHED){
@@ -88,7 +84,7 @@ const Agent = ({userName, userId, type, interviewId, questions}: AgentProps) => 
                 handleGenerateFeedback(messages);
             }
         }
-        },[messages, callStatus, type, userId])
+        },[messages, callStatus, type, router, handleGenerateFeedback])
 
     const handleCall = async () => {
         setCallStatus(CallStatus.CONNECTING)

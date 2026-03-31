@@ -4,12 +4,14 @@ import Image from 'next/image'
 import InterviewCard from '@/components/InterviewCard'
 import { getCurrentUser } from '@/lib/actions/auth.action'
 import {getInterviewByUserId, getLatestInterviews} from '@/lib/actions/general.action'
+import { redirect } from 'next/navigation'
 const page = async () => {
   const user = await getCurrentUser();
+  if (!user) redirect('/sign-in');
 
   const [userInterviews, latestInterviews ] = await Promise.all([
-    await getInterviewByUserId(user?.id!),
-    await getLatestInterviews({userId: user?.id!})
+    getInterviewByUserId(user.id),
+    getLatestInterviews({userId: user.id})
   ]);
 
   const hasPastInterview = userInterviews?.length>0;

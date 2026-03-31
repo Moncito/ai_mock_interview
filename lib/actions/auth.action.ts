@@ -30,10 +30,10 @@ export async function signUp(params: SignUpParams) {
         };
 
 
-    }catch(e: any){
+    }catch(e: unknown){
         console.error('Error Creating a User', e);
 
-        if(e.code === 'auth/email-already-exist'){
+        if(typeof e === 'object' && e !== null && 'code' in e && (e as { code: string }).code === 'auth/email-already-exist'){
             return{
                 success: false,
                 message: "This Email is Already in Use."
@@ -98,8 +98,8 @@ export async function getCurrentUser(): Promise<User | null> {
         // 🔹 Check if user still exists in Firebase Auth
         try {
             await auth.getUser(decodedClaims.uid);
-        } catch (authError: any) {
-            if (authError.code === "auth/user-not-found") {
+        } catch (authError: unknown) {
+            if (typeof authError === 'object' && authError !== null && 'code' in authError && (authError as { code: string }).code === "auth/user-not-found") {
                 console.warn("User deleted. Session should be cleared.");
                 return null; // ✅ Don't delete cookie here
             }
