@@ -4,7 +4,7 @@ import { auth, db } from "@/firebase/admin";
 import { cookies } from "next/headers";
 
 export async function getCurrentUser() {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("session")?.value;
 
     if (!sessionCookie) return null;
