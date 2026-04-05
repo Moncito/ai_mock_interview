@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎙️ PrepSaint — AI Mock Interview Platform
+#  PrepSaint — AI Mock Interview Platform
 
 **Ace your next job interview with real-time AI voice practice and instant feedback.**
 
@@ -14,22 +14,22 @@
 
 ---
 
-## 📌 Overview
+##  Overview
 
 **PrepSaint** is a full-stack AI-powered platform that simulates real job interviews through natural voice conversations. It generates tailored questions, conducts live voice interviews with an AI interviewer, and delivers detailed performance feedback — all personalized to your target role, experience level, and tech stack.
 
-## ✨ Features
+##  Features
 
 | Feature                          | Description                                                                                                                      |
 | :------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
-| **🎤 Voice Interviews**          | Real-time voice conversations with an AI interviewer powered by Vapi, Deepgram (speech-to-text), and ElevenLabs (text-to-speech) |
-| **🧠 Smart Question Generation** | Google Gemini 2.0 Flash generates 1–20 customized questions based on role, experience level, tech stack, and interview type      |
-| **📊 AI Feedback & Scoring**     | Get scored 0–100 across 5 dimensions: Communication, Technical Knowledge, Problem Solving, Cultural Fit, and Confidence          |
-| **🔐 Secure Authentication**     | Email/password auth via Firebase with server-side session cookies (httpOnly, 7-day expiry)                                       |
-| **📋 Interview Dashboard**       | Track your interview history, view scores, browse other users' public interviews                                                 |
-| **💻 100+ Tech Stack Icons**     | Visual tech stack display with icons for 100+ technologies                                                                       |
+| **Voice Interviews**          | Real-time voice conversations with an AI interviewer powered by Vapi, Deepgram (speech-to-text), and ElevenLabs (text-to-speech) |
+| **Smart Question Generation** | Google Gemini 2.0 Flash generates 1–20 customized questions based on role, experience level, tech stack, and interview type      |
+| **AI Feedback & Scoring**     | Get scored 0–100 across 5 dimensions: Communication, Technical Knowledge, Problem Solving, Cultural Fit, and Confidence          |
+| **Secure Authentication**     | Email/password auth via Firebase with server-side session cookies (httpOnly, 7-day expiry)                                       |
+| **Interview Dashboard**       | Track your interview history, view scores, browse other users' public interviews                                                 |
+| **100+ Tech Stack Icons**     | Visual tech stack display with icons for 100+ technologies                                                                       |
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 ### Frontend
 
@@ -54,7 +54,7 @@
 - **Firebase Admin SDK** — server-side session verification
 - **Next.js Server Actions** — secure server-side mutations
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 app/
@@ -86,7 +86,7 @@ firebase/
 └── admin.ts                   # Firebase Admin SDK config
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -134,7 +134,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to start practicing!
 
-## 🔄 How It Works
+##How It Works
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
@@ -157,7 +157,7 @@ Open [http://localhost:3000](http://localhost:3000) to start practicing!
 2. **Interview** — A voice AI conducts the interview in real-time using speech recognition and synthesis.
 3. **Feedback** — After the interview, Gemini analyzes the full transcript and scores you across 5 key competencies.
 
-## 📜 Available Scripts
+##Available Scripts
 
 | Script          | Description                     |
 | :-------------- | :------------------------------ |
@@ -166,7 +166,7 @@ Open [http://localhost:3000](http://localhost:3000) to start practicing!
 | `npm run start` | Start production server         |
 | `npm run lint`  | Run ESLint                      |
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
 
@@ -176,7 +176,7 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+##License
 
 This project is open source and available under the [MIT License](LICENSE).
 
@@ -184,6 +184,6 @@ This project is open source and available under the [MIT License](LICENSE).
 
 <div align="center">
 
-**Built with ❤️ by [Moncito](https://github.com/Moncito)**
+**Built by [Moncito](https://github.com/Moncito)**
 
 </div>
